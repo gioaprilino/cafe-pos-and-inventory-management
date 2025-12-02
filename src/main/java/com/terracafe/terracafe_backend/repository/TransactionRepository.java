@@ -3,7 +3,6 @@ package com.terracafe.terracafe_backend.repository;
 import com.terracafe.terracafe_backend.model.Transaction;
 import com.terracafe.terracafe_backend.dto.SalesReportProjection;
 
-import org.antlr.v4.runtime.atn.SemanticContext.AND;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
