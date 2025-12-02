@@ -1,0 +1,81 @@
+package com.terracafe.terracafe_backend.controller;
+
+import com.terracafe.terracafe_backend.dto.SalesReportProjection; // Import DTO
+import com.terracafe.terracafe_backend.dto.TransactionItemRequest;
+import com.terracafe.terracafe_backend.model.Transaction;
+import com.terracafe.terracafe_backend.service.TransactionService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/transactions") // Base path untuk endpoint transaction
+public class TransactionController {
+
+    @Autowired
+    private TransactionService transactionService;
+
+    @GetMapping
+    public List<Transaction> getAllTransactions() {
+        // TODO: Add authorization check (Manager or Cashier based on context)
+        return transactionService.getAllTransactions();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Transaction> getTransactionById(@PathVariable Long id) {
+        // TODO: Add authorization check (Manager or Cashier who created it)
+        Optional<Transaction> transaction = transactionService.getTransactionById(id);
+        return transaction.map(ResponseEntity::ok)
+                          .orElse(ResponseEntity.notFound().build());
+    }
+
+    // Endpoint untuk membuat transaksi baru (untuk kasir)
+    @PostMapping
+    public ResponseEntity<Transaction> createTransaction(@Valid @RequestBody List<TransactionItemRequest> itemRequests, @RequestParam Long cashierId) {
+        // TODO: Add authorization check (Cashier)
+        // TODO: Add validation (@Valid on itemRequests)
+        try {
+            Transaction newTransaction = transactionService.createTransaction(itemRequests, cashierId);
+            return ResponseEntity.ok(newTransaction);
+        } catch (RuntimeException e) {
+            // Handle potential errors (e.g., product not found, cashier not found, insufficient stock)
+            return ResponseEntity.badRequest().body(null); // Or return error details
+        }
+    }
+
+    // Endpoint untuk mengupdate status transaksi (misalnya oleh kasir atau manager)
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Transaction> updateTransactionStatus(@PathVariable Long id, @RequestParam Transaction.TransactionStatus newStatus) {
+        // TODO: Add authorization check (Manager or Cashier based on context)
+        try {
+            Transaction updatedTransaction = transactionService.updateTransactionStatus(id, newStatus);
+            return ResponseEntity.ok(updatedTransaction);
+        } catch (RuntimeException e) {
+            // Handle potential errors (e.g., transaction not found, invalid status transition)
+            return ResponseEntity.badRequest().body(null); // Or return error details
+        }
+    }
+
+    // Endpoint untuk laporan penjualan (untuk manager)
+    @GetMapping("/reports/sales")
+    public ResponseEntity<List<SalesReportProjection>> getDailySalesReport(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        // TODO: Add authorization check (Manager only)
+        List<SalesReportProjection> report = transactionService.getDailySalesReport(start, end);
+        return ResponseEntity.ok(report);
+    }
+
+    // DELETE biasanya tidak digunakan untuk transaksi karena penting untuk audit trail
+    // Jika tetap dibutuhkan (misalnya hanya untuk draft), tambahkan method delete dengan hati-hati
+    // @DeleteMapping("/{id}")
+    // public ResponseEntity<String> deleteTransaction(@PathVariable Long id) { ... }
+}
