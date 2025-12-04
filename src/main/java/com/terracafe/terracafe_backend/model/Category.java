@@ -1,6 +1,7 @@
 package com.terracafe.terracafe_backend.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,6 +14,7 @@ public class Category {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank(message = "Category name cannot be blank")
     private String name;
 
     private String description;

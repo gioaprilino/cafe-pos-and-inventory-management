@@ -8,6 +8,7 @@ import com.terracafe.terracafe_backend.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -24,14 +25,14 @@ public class TransactionController {
     private TransactionService transactionService;
 
     @GetMapping
+    @PreAuthorize("hasRole('MANAGER') or hasRole('CASHIER')")
     public List<Transaction> getAllTransactions() {
-        // TODO: Add authorization check (Manager or Cashier based on context)
         return transactionService.getAllTransactions();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('CASHIER')")
     public ResponseEntity<Transaction> getTransactionById(@PathVariable Long id) {
-        // TODO: Add authorization check (Manager or Cashier who created it)
         Optional<Transaction> transaction = transactionService.getTransactionById(id);
         return transaction.map(ResponseEntity::ok)
                           .orElse(ResponseEntity.notFound().build());
@@ -39,9 +40,8 @@ public class TransactionController {
 
     // Endpoint untuk membuat transaksi baru (untuk kasir)
     @PostMapping
+    @PreAuthorize("hasRole('CASHIER')")
     public ResponseEntity<Transaction> createTransaction(@Valid @RequestBody List<TransactionItemRequest> itemRequests, @RequestParam Long cashierId) {
-        // TODO: Add authorization check (Cashier)
-        // TODO: Add validation (@Valid on itemRequests)
         try {
             Transaction newTransaction = transactionService.createTransaction(itemRequests, cashierId);
             return ResponseEntity.ok(newTransaction);
@@ -53,8 +53,8 @@ public class TransactionController {
 
     // Endpoint untuk mengupdate status transaksi (misalnya oleh kasir atau manager)
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('CASHIER')")
     public ResponseEntity<Transaction> updateTransactionStatus(@PathVariable Long id, @RequestParam Transaction.TransactionStatus newStatus) {
-        // TODO: Add authorization check (Manager or Cashier based on context)
         try {
             Transaction updatedTransaction = transactionService.updateTransactionStatus(id, newStatus);
             return ResponseEntity.ok(updatedTransaction);
@@ -66,10 +66,10 @@ public class TransactionController {
 
     // Endpoint untuk laporan penjualan (untuk manager)
     @GetMapping("/reports/sales")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<List<SalesReportProjection>> getDailySalesReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        // TODO: Add authorization check (Manager only)
         List<SalesReportProjection> report = transactionService.getDailySalesReport(start, end);
         return ResponseEntity.ok(report);
     }

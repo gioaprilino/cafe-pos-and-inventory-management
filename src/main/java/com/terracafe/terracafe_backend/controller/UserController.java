@@ -1,9 +1,13 @@
 package com.terracafe.terracafe_backend.controller;
 
+import com.terracafe.terracafe_backend.dto.LoginRequest;
+import com.terracafe.terracafe_backend.dto.LoginResponse;
 import com.terracafe.terracafe_backend.model.User;
 import com.terracafe.terracafe_backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,11 +21,13 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
+    @PreAuthorize("hasRole('MANAGER')")
     public List<User> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER') or #id == authentication.principal.id")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         Optional<User> user = userService.getUserById(id);
         return user.map(ResponseEntity::ok)
@@ -29,19 +35,40 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.saveUser(user);
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+        if (user.getUsername() == null || user.getUsername().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (user.getRole() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            User savedUser = userService.saveUser(user);
+            return ResponseEntity.ok(savedUser);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails) {
         Optional<User> existingUser = userService.getUserById(id);
         if (existingUser.isPresent()) {
             User updatedUser = existingUser.get();
-            updatedUser.setUsername(userDetails.getUsername());
-            // Jangan lupa untuk menangani password hash di sini
-            updatedUser.setPasswordHash(userDetails.getPasswordHash());
-            updatedUser.setRole(userDetails.getRole());
+            if (userDetails.getUsername() != null && !userDetails.getUsername().isBlank()) {
+                updatedUser.setUsername(userDetails.getUsername());
+            }
+            if (userDetails.getPasswordHash() != null && !userDetails.getPasswordHash().isBlank()) {
+                updatedUser.setPasswordHash(userDetails.getPasswordHash());
+            }
+            if (userDetails.getRole() != null) {
+                updatedUser.setRole(userDetails.getRole());
+            }
             return ResponseEntity.ok(userService.saveUser(updatedUser));
         } else {
             return ResponseEntity.notFound().build();
@@ -49,6 +76,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         Optional<User> existingUser = userService.getUserById(id);
         if (existingUser.isPresent()) {
@@ -57,5 +85,30 @@ public class UserController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+        Optional<User> userOpt = userService.getUserByUsername(loginRequest.getUsername());
+        
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(401)
+                    .body(new LoginResponse(null, null, null, null, "User not found"));
+        }
+
+        User user = userOpt.get();
+        if (!userService.authenticate(loginRequest.getUsername(), loginRequest.getPassword())) {
+            return ResponseEntity.status(401)
+                    .body(new LoginResponse(null, null, null, null, "Invalid credentials"));
+        }
+
+        LoginResponse response = new LoginResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getRole().getId().toString(),
+            user.getRole().getName(),
+            "Login successful"
+        );
+        return ResponseEntity.ok(response);
     }
 }

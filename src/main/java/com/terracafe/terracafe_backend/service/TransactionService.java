@@ -96,7 +96,7 @@ public class TransactionService {
 
     // Metode untuk mengurangi stok berdasarkan resep produk yang terjual
     private void consumeStockForTransaction(Transaction transaction) {
-        // TODO: Implementasikan logika untuk mengurangi stok
+        // Implementasikan logika untuk mengurangi stok
         // Ambil item transaksi
         for (TransactionItem item : transaction.getItems()) {
             Long productId = item.getProduct().getId();
@@ -151,8 +151,17 @@ public class TransactionService {
     }
 
     public void deleteTransaction(Long id) {
-        // TODO: Check if deletion is allowed based on status
-        transactionRepository.deleteById(id);
+        // Check if deletion is allowed based on status
+        Optional<Transaction> transactionOpt = transactionRepository.findById(id);
+        if (transactionOpt.isPresent()) {
+            Transaction transaction = transactionOpt.get();
+            if (transaction.getStatus() == Transaction.TransactionStatus.COMPLETED) {
+                throw new RuntimeException("Cannot delete a completed transaction. Status: " + transaction.getStatus());
+            }
+            transactionRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Transaction not found with id: " + id);
+        }
     }
 
     // Contoh method untuk laporan penjualan (menggunakan DTO/Projection)

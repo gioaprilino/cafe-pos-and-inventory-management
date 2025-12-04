@@ -2,8 +2,10 @@ package com.terracafe.terracafe_backend.controller;
 
 import com.terracafe.terracafe_backend.model.Recipe;
 import com.terracafe.terracafe_backend.service.RecipeService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,11 +19,13 @@ public class RecipeController {
     private RecipeService recipeService;
 
     @GetMapping
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public List<Recipe> getAllRecipes() {
         return recipeService.getAllRecipes();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public ResponseEntity<Recipe> getRecipeById(@PathVariable Long id) {
         Optional<Recipe> recipe = recipeService.getRecipeById(id);
         return recipe.map(ResponseEntity::ok)
@@ -29,19 +33,20 @@ public class RecipeController {
     }
 
     @GetMapping("/product/{productId}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public List<Recipe> getRecipesByProductId(@PathVariable Long productId) {
         return recipeService.getRecipesByProductId(productId);
     }
 
     @GetMapping("/ingredient/{ingredientId}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public List<Recipe> getRecipesByIngredientId(@PathVariable Long ingredientId) {
         return recipeService.getRecipesByIngredientId(ingredientId);
     }
 
     @PostMapping
-    public ResponseEntity<Recipe> createRecipe(@RequestBody Recipe recipe) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Recipe> createRecipe(@Valid @RequestBody Recipe recipe) {
         try {
             Recipe savedRecipe = recipeService.saveRecipe(recipe);
             return ResponseEntity.ok(savedRecipe);
@@ -52,9 +57,8 @@ public class RecipeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Recipe> updateRecipe(@PathVariable Long id, @RequestBody Recipe recipeDetails) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Recipe> updateRecipe(@PathVariable Long id, @Valid @RequestBody Recipe recipeDetails) {
         Optional<Recipe> existingRecipeOpt = recipeService.getRecipeById(id);
         if (existingRecipeOpt.isPresent()) {
             Recipe existingRecipe = existingRecipeOpt.get();
@@ -75,8 +79,8 @@ public class RecipeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<String> deleteRecipe(@PathVariable Long id) {
-        // TODO: Add authorization check (Manager only)
         recipeService.deleteRecipe(id);
         return ResponseEntity.ok("Recipe deleted successfully");
     }

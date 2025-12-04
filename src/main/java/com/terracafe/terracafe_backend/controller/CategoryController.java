@@ -2,8 +2,10 @@ package com.terracafe.terracafe_backend.controller;
 
 import com.terracafe.terracafe_backend.model.Category;
 import com.terracafe.terracafe_backend.service.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,12 +31,15 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<Category> createCategory(@Valid @RequestBody Category category) {
+        // Authorization check (Manager only)
+        // Validation (@Valid) is applied via @Valid annotation above
         try {
             Category savedCategory = categoryService.saveCategory(category);
             return ResponseEntity.ok(savedCategory);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             // Handle potential errors
             return ResponseEntity.badRequest().build();
@@ -42,9 +47,10 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category categoryDetails) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
+    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @Valid @RequestBody Category categoryDetails) {
+        // Authorization check (Manager only)
+        // Validation (@Valid) is applied via @Valid annotation above
         Optional<Category> existingCategoryOpt = categoryService.getCategoryById(id);
         if (existingCategoryOpt.isPresent()) {
             Category existingCategory = existingCategoryOpt.get();
@@ -54,6 +60,8 @@ public class CategoryController {
             try {
                 Category updatedCategory = categoryService.saveCategory(existingCategory);
                 return ResponseEntity.ok(updatedCategory);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().build();
             } catch (Exception e) {
                 // Handle potential errors
                 return ResponseEntity.badRequest().build();
@@ -64,9 +72,10 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Check if category is associated with products before deletion
+        // Authorization check (Manager only)
+        // Check if category is associated with products before deletion
         try {
             categoryService.deleteCategory(id);
             return ResponseEntity.ok("Category deleted successfully");

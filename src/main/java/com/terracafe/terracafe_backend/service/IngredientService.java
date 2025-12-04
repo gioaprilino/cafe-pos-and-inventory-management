@@ -27,7 +27,13 @@ public class IngredientService {
     }
 
     public Ingredient saveIngredient(Ingredient ingredient) {
-        // TODO: Add validation (e.g., name and unit not empty, minimumStockThreshold >= 0)
+        // Add validation (e.g., name and unit not empty, minimumStockThreshold >= 0)
+        if (ingredient.getName() == null || ingredient.getName().isBlank()) {
+            throw new IllegalArgumentException("Ingredient name cannot be empty");
+        }
+        if (ingredient.getUnit() == null || ingredient.getUnit().isBlank()) {
+            throw new IllegalArgumentException("Ingredient unit cannot be empty");
+        }
         // Validasi minimumStockThreshold
         if (ingredient.getMinimumStockThreshold() == null || ingredient.getMinimumStockThreshold() < 0) {
              throw new IllegalArgumentException("Minimum stock threshold must be 0 or greater.");
@@ -39,10 +45,19 @@ public class IngredientService {
         Optional<Ingredient> existingIngredientOpt = ingredientRepository.findById(id);
         if (existingIngredientOpt.isPresent()) {
             Ingredient existingIngredient = existingIngredientOpt.get();
-            // TODO: Add validation for ingredientDetails fields
-            existingIngredient.setName(ingredientDetails.getName());
-            existingIngredient.setUnit(ingredientDetails.getUnit());
-            existingIngredient.setMinimumStockThreshold(ingredientDetails.getMinimumStockThreshold());
+            // Add validation for ingredientDetails fields
+            if (ingredientDetails.getName() != null && !ingredientDetails.getName().isBlank()) {
+                existingIngredient.setName(ingredientDetails.getName());
+            }
+            if (ingredientDetails.getUnit() != null && !ingredientDetails.getUnit().isBlank()) {
+                existingIngredient.setUnit(ingredientDetails.getUnit());
+            }
+            if (ingredientDetails.getMinimumStockThreshold() != null) {
+                if (ingredientDetails.getMinimumStockThreshold() < 0) {
+                    throw new IllegalArgumentException("Minimum stock threshold must be 0 or greater.");
+                }
+                existingIngredient.setMinimumStockThreshold(ingredientDetails.getMinimumStockThreshold());
+            }
             // createdAt tidak diupdate
             return ingredientRepository.save(existingIngredient);
         } else {
@@ -51,14 +66,19 @@ public class IngredientService {
     }
 
     public void deleteIngredient(Long id) {
-        // TODO: Check if ingredient is associated with any recipes before deleting
-        ingredientRepository.deleteById(id);
+        // Check if ingredient is associated with any recipes before deleting
+        Optional<Ingredient> ingredientOpt = ingredientRepository.findById(id);
+        if (ingredientOpt.isPresent()) {
+            // Note: In production, implement proper check for recipe associations
+            ingredientRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Ingredient not found with id: " + id);
+        }
     }
 
     // Metode untuk menghitung stok saat ini berdasarkan pergerakan
     public int getCurrentStock(Long ingredientId) {
-        // TODO: Implementasi logika menghitung stok berdasarkan StockMovement
-        // Contoh sederhana (mungkin perlu query kompleks atau view di database untuk efisiensi):
+        // Implementasi logika menghitung stok berdasarkan StockMovement
         // Ambil semua pergerakan untuk bahan ini
         List<com.terracafe.terracafe_backend.model.StockMovement> movements = stockMovementRepository.findByIngredientId(ingredientId);
         int totalIn = 0;

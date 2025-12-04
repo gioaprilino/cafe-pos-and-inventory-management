@@ -2,8 +2,10 @@ package com.terracafe.terracafe_backend.controller;
 
 import com.terracafe.terracafe_backend.model.StockMovement;
 import com.terracafe.terracafe_backend.service.StockMovementService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,11 +19,13 @@ public class StockMovementController {
     private StockMovementService stockMovementService;
 
     @GetMapping
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public List<StockMovement> getAllStockMovements() {
         return stockMovementService.getAllStockMovements();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public ResponseEntity<StockMovement> getStockMovementById(@PathVariable Long id) {
         Optional<StockMovement> stockMovement = stockMovementService.getStockMovementById(id);
         return stockMovement.map(ResponseEntity::ok)
@@ -29,19 +33,20 @@ public class StockMovementController {
     }
 
     @GetMapping("/ingredient/{ingredientId}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public List<StockMovement> getStockMovementsByIngredientId(@PathVariable Long ingredientId) {
         return stockMovementService.getStockMovementsByIngredientId(ingredientId);
     }
 
     @GetMapping("/ingredient/{ingredientId}/type/{type}")
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
     public List<StockMovement> getStockMovementsByIngredientIdAndType(@PathVariable Long ingredientId, @PathVariable StockMovement.MovementType type) {
         return stockMovementService.getStockMovementsByIngredientIdAndType(ingredientId, type);
     }
 
     @PostMapping
-    public ResponseEntity<StockMovement> createStockMovement(@RequestBody StockMovement stockMovement) {
-        // TODO: Add authorization check (Kitchen or Manager)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER') or hasRole('KITCHEN')")
+    public ResponseEntity<StockMovement> createStockMovement(@Valid @RequestBody StockMovement stockMovement) {
         try {
             StockMovement savedMovement = stockMovementService.saveStockMovement(stockMovement);
             return ResponseEntity.ok(savedMovement);

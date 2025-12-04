@@ -22,6 +22,9 @@ public class StockMovementService {
     private IngredientRepository ingredientRepository; // Untuk validasi bahan
     @Autowired
     private UserRepository userRepository; // Untuk validasi user
+    
+    @Autowired
+    private IngredientService ingredientService; // Untuk menghitung stok
 
     public List<StockMovement> getAllStockMovements() {
         return stockMovementRepository.findAll();
@@ -40,24 +43,29 @@ public class StockMovementService {
     }
 
     public StockMovement saveStockMovement(StockMovement stockMovement) {
-        // TODO: Add validation (e.g., quantity > 0, movementType valid, ingredient exists, user exists)
+        // Add validation (e.g., quantity > 0, movementType valid, ingredient exists, user exists)
         validateIngredientAndUser(stockMovement.getIngredient(), stockMovement.getCreatedByUser());
+        validateQuantity(stockMovement.getQuantity());
 
-        // TODO: Implement business logic for 'OUT' movements (e.g., check if enough stock)
+        // Implement business logic for 'OUT' movements (e.g., check if enough stock)
         if (stockMovement.getMovementType() == StockMovement.MovementType.OUT) {
-            // Ambil stok saat ini
-            // int currentStock = ingredientService.getCurrentStock(stockMovement.getIngredient().getId());
-            // if (currentStock < stockMovement.getQuantity()) {
-            //     throw new RuntimeException("Insufficient stock for ingredient: " + stockMovement.getIngredient().getName());
-            // }
-            // Jika menggunakan service lain, injeksi dan panggil methodnya
+            int currentStock = ingredientService.getCurrentStock(stockMovement.getIngredient().getId());
+            if (currentStock < stockMovement.getQuantity()) {
+                throw new RuntimeException("Insufficient stock for ingredient: " + stockMovement.getIngredient().getName() + 
+                                         ". Current stock: " + currentStock + ", Required: " + stockMovement.getQuantity());
+            }
         }
 
         return stockMovementRepository.save(stockMovement);
     }
 
     public void deleteStockMovement(Long id) {
-        stockMovementRepository.deleteById(id);
+        Optional<StockMovement> movementOpt = stockMovementRepository.findById(id);
+        if (movementOpt.isPresent()) {
+            stockMovementRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("StockMovement not found with id: " + id);
+        }
     }
 
     // Metode bantuan untuk validasi bahan dan user
@@ -66,11 +74,22 @@ public class StockMovementService {
             if (!ingredientRepository.existsById(ingredient.getId())) {
                 throw new RuntimeException("Ingredient not found with id: " + ingredient.getId());
             }
+        } else {
+            throw new RuntimeException("Ingredient is required for stock movement");
         }
         if (user != null && user.getId() != null) {
             if (!userRepository.existsById(user.getId())) {
                 throw new RuntimeException("User not found with id: " + user.getId());
             }
+        } else {
+            throw new RuntimeException("User is required for stock movement");
+        }
+    }
+
+    // Metode bantuan untuk validasi kuantitas
+    private void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
         }
     }
 }

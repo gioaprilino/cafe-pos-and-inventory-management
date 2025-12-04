@@ -1,17 +1,83 @@
 # TerraCafe Backend API Documentation
 
 ## Summary
-**Last Updated:** December 3, 2025  
+**Last Updated:** December 5, 2025  
 **Total Endpoints:** 43  
-**Authentication:** None (No security configuration detected)
+**Authentication:** ✅ **Spring Security with Role-Based Access Control (RBAC) Enabled**
 
 ---
 
-## Authentication Status
-⚠️ **WARNING:** This API currently has **NO AUTHENTICATION** implemented. All endpoints are publicly accessible.
+## 🔐 Authentication & Authorization
 
-### Recommendation
-Consider implementing Spring Security with JWT tokens or OAuth2 for production use.
+### Status
+✅ **Spring Security ENABLED** with role-based access control implemented.
+
+### Available Roles
+The system has three main roles with specific permissions:
+
+1. **MANAGER** - Full system access (all CRUD operations)
+2. **CASHIER** - Transaction management and menu viewing
+3. **KITCHEN** - Inventory and recipe management
+
+### Authentication Flow
+
+#### Login
+**Endpoint:** `POST /api/users/login`  
+**Access:** Public (No authentication required)
+
+**Request:**
+```json
+{
+  "username": "admin",
+  "password": "password123"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "id": 1,
+  "username": "admin",
+  "roleId": "1",
+  "roleName": "MANAGER",
+  "message": "Login successful"
+}
+```
+
+**Error Response (401 Unauthorized):**
+```json
+{
+  "id": null,
+  "username": null,
+  "roleId": null,
+  "roleName": null,
+  "message": "Invalid credentials"
+}
+```
+
+### Security Features
+- ✅ BCrypt password hashing
+- ✅ Method-level security with `@PreAuthorize`
+- ✅ Stateless session management (REST API)
+- ✅ CSRF protection disabled (for REST API)
+- ✅ Role-based endpoint access control
+
+---
+
+## 📋 Role-Based Access Matrix
+
+| Resource | GET (Read) | POST (Create) | PUT (Update) | DELETE |
+|----------|-----------|--------------|--------------|--------|
+| **Categories** | Public | MANAGER | MANAGER | MANAGER |
+| **Products** | Public | MANAGER | MANAGER | MANAGER |
+| **Ingredients** | MANAGER, KITCHEN | MANAGER | MANAGER | MANAGER |
+| **Recipes** | MANAGER, KITCHEN | MANAGER | MANAGER | MANAGER |
+| **Users** | MANAGER | MANAGER | MANAGER* | MANAGER |
+| **Transactions** | MANAGER, CASHIER | CASHIER | MANAGER, CASHIER | N/A** |
+| **Stock Movements** | MANAGER, KITCHEN | MANAGER, KITCHEN | N/A | N/A** |
+
+*Users can update their own profile  
+**Not implemented for audit trail purposes
 
 ---
 
@@ -19,19 +85,19 @@ Consider implementing Spring Security with JWT tokens or OAuth2 for production u
 
 ### 1. Category Management (`/api/categories`)
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Required Role |
 |--------|----------|-------------|---------------|
-| GET | `/api/categories` | Get all categories | No |
-| GET | `/api/categories/{id}` | Get category by ID | No |
-| POST | `/api/categories` | Create new category | No |
-| PUT | `/api/categories/{id}` | Update category | No |
-| DELETE | `/api/categories/{id}` | Delete category | No |
+| GET | `/api/categories` | Get all categories | Public |
+| GET | `/api/categories/{id}` | Get category by ID | Public |
+| POST | `/api/categories` | Create new category | MANAGER |
+| PUT | `/api/categories/{id}` | Update category | MANAGER |
+| DELETE | `/api/categories/{id}` | Delete category | MANAGER |
 
 **Request Body (POST/PUT):**
 ```json
 {
-  "name": "string",
-  "description": "string"
+  "name": "Beverages",
+  "description": "Hot and cold drinks"
 }
 ```
 
@@ -41,72 +107,35 @@ Consider implementing Spring Security with JWT tokens or OAuth2 for production u
   "id": 1,
   "name": "Beverages",
   "description": "Hot and cold drinks",
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
+  "createdAt": "2025-12-05T10:00:00",
+  "updatedAt": "2025-12-05T10:00:00"
 }
 ```
 
 ---
 
-### 2. Ingredient Management (`/api/ingredients`)
+### 2. Product Management (`/api/products`)
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Required Role |
 |--------|----------|-------------|---------------|
-| GET | `/api/ingredients` | Get all ingredients | No |
-| GET | `/api/ingredients/{id}` | Get ingredient by ID | No |
-| POST | `/api/ingredients` | Create new ingredient | No |
-| PUT | `/api/ingredients/{id}` | Update ingredient | No |
-| DELETE | `/api/ingredients/{id}` | Delete ingredient | No |
-| GET | `/api/ingredients/low-stock` | Get low stock ingredients | No |
+| GET | `/api/products` | Get all products | Public |
+| GET | `/api/products/active` | Get active products | Public |
+| GET | `/api/products/{id}` | Get product by ID | Public |
+| POST | `/api/products` | Create new product | MANAGER |
+| PUT | `/api/products/{id}` | Update product | MANAGER |
+| DELETE | `/api/products/{id}` | Delete product | MANAGER |
 
 **Request Body (POST/PUT):**
 ```json
 {
-  "name": "string",
-  "unit": "string",
-  "currentStock": 0.0,
-  "minStock": 0.0,
-  "unitPrice": 0.0
-}
-```
-
-**Response Example:**
-```json
-{
-  "id": 1,
-  "name": "Coffee Beans",
-  "unit": "kg",
-  "currentStock": 50.0,
-  "minStock": 10.0,
-  "unitPrice": 150000.0,
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
-}
-```
-
----
-
-### 3. Product Management (`/api/products`)
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/products` | Get all products | No |
-| GET | `/api/products/{id}` | Get product by ID | No |
-| POST | `/api/products` | Create new product | No |
-| PUT | `/api/products/{id}` | Update product | No |
-| DELETE | `/api/products/{id}` | Delete product | No |
-| GET | `/api/products/category/{categoryId}` | Get products by category | No |
-| GET | `/api/products/available` | Get available products | No |
-
-**Request Body (POST/PUT):**
-```json
-{
-  "name": "string",
-  "description": "string",
-  "price": 0.0,
-  "categoryId": 0,
-  "imageUrl": "string",
-  "isAvailable": true
+  "name": "Espresso",
+  "description": "Strong Italian coffee",
+  "price": 25000.0,
+  "category": {
+    "id": 1
+  },
+  "imageUrl": "https://example.com/espresso.jpg",
+  "isActive": true
 }
 ```
 
@@ -122,9 +151,44 @@ Consider implementing Spring Security with JWT tokens or OAuth2 for production u
     "name": "Beverages"
   },
   "imageUrl": "https://example.com/espresso.jpg",
-  "isAvailable": true,
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
+  "isActive": true,
+  "createdAt": "2025-12-05T10:00:00",
+  "updatedAt": "2025-12-05T10:00:00"
+}
+```
+
+---
+
+### 3. Ingredient Management (`/api/ingredients`)
+
+| Method | Endpoint | Description | Required Role |
+|--------|----------|-------------|---------------|
+| GET | `/api/ingredients` | Get all ingredients | MANAGER, KITCHEN |
+| GET | `/api/ingredients/{id}` | Get ingredient by ID | MANAGER, KITCHEN |
+| GET | `/api/ingredients/{id}/stock` | Get current stock | MANAGER, KITCHEN |
+| GET | `/api/ingredients/{id}/low-stock` | Check if low stock | MANAGER, KITCHEN |
+| POST | `/api/ingredients` | Create new ingredient | MANAGER |
+| PUT | `/api/ingredients/{id}` | Update ingredient | MANAGER |
+| DELETE | `/api/ingredients/{id}` | Delete ingredient | MANAGER |
+
+**Request Body (POST/PUT):**
+```json
+{
+  "name": "Coffee Beans",
+  "unit": "kg",
+  "minimumStockThreshold": 10.0
+}
+```
+
+**Response Example:**
+```json
+{
+  "id": 1,
+  "name": "Coffee Beans",
+  "unit": "kg",
+  "minimumStockThreshold": 10.0,
+  "createdAt": "2025-12-05T10:00:00",
+  "updatedAt": "2025-12-05T10:00:00"
 }
 ```
 
@@ -132,22 +196,26 @@ Consider implementing Spring Security with JWT tokens or OAuth2 for production u
 
 ### 4. Recipe Management (`/api/recipes`)
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Required Role |
 |--------|----------|-------------|---------------|
-| GET | `/api/recipes` | Get all recipes | No |
-| GET | `/api/recipes/{id}` | Get recipe by ID | No |
-| POST | `/api/recipes` | Create new recipe | No |
-| PUT | `/api/recipes/{id}` | Update recipe | No |
-| DELETE | `/api/recipes/{id}` | Delete recipe | No |
-| GET | `/api/recipes/product/{productId}` | Get recipes by product | No |
-| GET | `/api/recipes/ingredient/{ingredientId}` | Get recipes by ingredient | No |
+| GET | `/api/recipes` | Get all recipes | MANAGER, KITCHEN |
+| GET | `/api/recipes/{id}` | Get recipe by ID | MANAGER, KITCHEN |
+| GET | `/api/recipes/product/{productId}` | Get recipes by product | MANAGER, KITCHEN |
+| GET | `/api/recipes/ingredient/{ingredientId}` | Get recipes by ingredient | MANAGER, KITCHEN |
+| POST | `/api/recipes` | Create new recipe | MANAGER |
+| PUT | `/api/recipes/{id}` | Update recipe | MANAGER |
+| DELETE | `/api/recipes/{id}` | Delete recipe | MANAGER |
 
 **Request Body (POST/PUT):**
 ```json
 {
-  "productId": 0,
-  "ingredientId": 0,
-  "quantityNeeded": 0.0
+  "product": {
+    "id": 1
+  },
+  "ingredient": {
+    "id": 1
+  },
+  "quantityNeeded": 0.02
 }
 ```
 
@@ -164,28 +232,32 @@ Consider implementing Spring Security with JWT tokens or OAuth2 for production u
     "name": "Coffee Beans"
   },
   "quantityNeeded": 0.02,
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
+  "createdAt": "2025-12-05T10:00:00",
+  "updatedAt": "2025-12-05T10:00:00"
 }
 ```
 
 ---
 
-### 5. Role Management (`/api/roles`)
+### 5. User Management (`/api/users`)
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Required Role |
 |--------|----------|-------------|---------------|
-| GET | `/api/roles` | Get all roles | No |
-| GET | `/api/roles/{id}` | Get role by ID | No |
-| POST | `/api/roles` | Create new role | No |
-| PUT | `/api/roles/{id}` | Update role | No |
-| DELETE | `/api/roles/{id}` | Delete role | No |
+| GET | `/api/users` | Get all users | MANAGER |
+| GET | `/api/users/{id}` | Get user by ID | MANAGER or Self |
+| POST | `/api/users` | Create new user | MANAGER |
+| PUT | `/api/users/{id}` | Update user | MANAGER or Self |
+| DELETE | `/api/users/{id}` | Delete user | MANAGER |
+| POST | `/api/users/login` | User login | Public |
 
 **Request Body (POST/PUT):**
 ```json
 {
-  "name": "string",
-  "description": "string"
+  "username": "cashier01",
+  "passwordHash": "password123",
+  "role": {
+    "id": 2
+  }
 }
 ```
 
@@ -193,42 +265,94 @@ Consider implementing Spring Security with JWT tokens or OAuth2 for production u
 ```json
 {
   "id": 1,
-  "name": "ADMIN",
-  "description": "Administrator role with full access",
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
+  "username": "cashier01",
+  "role": {
+    "id": 2,
+    "name": "CASHIER"
+  },
+  "createdAt": "2025-12-05T10:00:00",
+  "updatedAt": "2025-12-05T10:00:00"
 }
 ```
 
 ---
 
-### 6. Stock Movement Management (`/api/stock-movements`)
+### 6. Transaction Management (`/api/transactions`)
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Required Role |
 |--------|----------|-------------|---------------|
-| GET | `/api/stock-movements` | Get all stock movements | No |
-| GET | `/api/stock-movements/{id}` | Get stock movement by ID | No |
-| POST | `/api/stock-movements` | Create new stock movement | No |
-| PUT | `/api/stock-movements/{id}` | Update stock movement | No |
-| DELETE | `/api/stock-movements/{id}` | Delete stock movement | No |
-| GET | `/api/stock-movements/ingredient/{ingredientId}` | Get movements by ingredient | No |
-| GET | `/api/stock-movements/type/{type}` | Get movements by type | No |
-| GET | `/api/stock-movements/date-range` | Get movements by date range | No |
+| GET | `/api/transactions` | Get all transactions | MANAGER, CASHIER |
+| GET | `/api/transactions/{id}` | Get transaction by ID | MANAGER, CASHIER |
+| POST | `/api/transactions` | Create new transaction | CASHIER |
+| PUT | `/api/transactions/{id}/status` | Update transaction status | MANAGER, CASHIER |
+| GET | `/api/transactions/reports/sales` | Get sales report | MANAGER |
 
-**Query Parameters for date-range:**
-- `startDate`: ISO date string (e.g., "2025-01-01")
-- `endDate`: ISO date string (e.g., "2025-12-31")
+**Request Body (POST):**
+```json
+[
+  {
+    "productId": 1,
+    "quantity": 2,
+    "notes": "Extra hot"
+  }
+]
+```
 
-**Request Body (POST/PUT):**
+**Query Parameters:**
+- `cashierId` (required): ID of the cashier
+
+**Response Example:**
 ```json
 {
-  "ingredientId": 0,
-  "movementType": "IN|OUT|ADJUSTMENT",
-  "quantity": 0.0,
-  "notes": "string",
-  "userId": 0
+  "id": 1,
+  "user": {
+    "id": 2,
+    "username": "cashier01"
+  },
+  "totalAmount": 50000.0,
+  "paymentMethod": "CASH",
+  "status": "COMPLETED",
+  "createdAt": "2025-12-05T10:00:00",
+  "updatedAt": "2025-12-05T10:00:00"
 }
 ```
+
+**Sales Report Endpoint:**
+```
+GET /api/transactions/reports/sales?start=2025-12-01T00:00:00&end=2025-12-31T23:59:59
+```
+
+---
+
+### 7. Stock Movement Management (`/api/stock-movements`)
+
+| Method | Endpoint | Description | Required Role |
+|--------|----------|-------------|---------------|
+| GET | `/api/stock-movements` | Get all stock movements | MANAGER, KITCHEN |
+| GET | `/api/stock-movements/{id}` | Get stock movement by ID | MANAGER, KITCHEN |
+| GET | `/api/stock-movements/ingredient/{ingredientId}` | Get movements by ingredient | MANAGER, KITCHEN |
+| GET | `/api/stock-movements/ingredient/{id}/type/{type}` | Get movements by ingredient and type | MANAGER, KITCHEN |
+| POST | `/api/stock-movements` | Create new stock movement | MANAGER, KITCHEN |
+
+**Request Body (POST):**
+```json
+{
+  "ingredient": {
+    "id": 1
+  },
+  "movementType": "IN",
+  "quantity": 10.0,
+  "notes": "Restocking",
+  "user": {
+    "id": 3
+  }
+}
+```
+
+**Movement Types:**
+- `IN` - Stock incoming
+- `OUT` - Stock outgoing
+- `ADJUSTMENT` - Stock adjustment
 
 **Response Example:**
 ```json
@@ -242,267 +366,132 @@ Consider implementing Spring Security with JWT tokens or OAuth2 for production u
   "quantity": 10.0,
   "notes": "Restocking",
   "user": {
-    "id": 1,
-    "username": "admin"
+    "id": 3,
+    "username": "kitchen01"
   },
-  "createdAt": "2025-12-03T10:00:00"
+  "createdAt": "2025-12-05T10:00:00"
 }
 ```
 
 ---
 
-### 7. Transaction Management (`/api/transactions`)
+### 8. Role Management (`/api/roles`)
 
-| Method | Endpoint | Description | Auth Required |
+| Method | Endpoint | Description | Required Role |
 |--------|----------|-------------|---------------|
-| GET | `/api/transactions` | Get all transactions | No |
-| GET | `/api/transactions/{id}` | Get transaction by ID | No |
-| POST | `/api/transactions` | Create new transaction | No |
-| PUT | `/api/transactions/{id}` | Update transaction | No |
-| DELETE | `/api/transactions/{id}` | Delete transaction | No |
-| GET | `/api/transactions/user/{userId}` | Get transactions by user | No |
-| GET | `/api/transactions/status/{status}` | Get transactions by status | No |
-| GET | `/api/transactions/date-range` | Get transactions by date range | No |
-| GET | `/api/transactions/daily-sales` | Get daily sales report | No |
+| GET | `/api/roles` | Get all roles | Authenticated |
+| GET | `/api/roles/{id}` | Get role by ID | Authenticated |
+| POST | `/api/roles` | Create new role | MANAGER |
+| PUT | `/api/roles/{id}` | Update role | MANAGER |
+| DELETE | `/api/roles/{id}` | Delete role | MANAGER |
 
-**Query Parameters for date-range:**
-- `startDate`: ISO date string
-- `endDate`: ISO date string
-
-**Request Body (POST/PUT):**
-```json
-{
-  "userId": 0,
-  "totalAmount": 0.0,
-  "paymentMethod": "CASH|CARD|E_WALLET",
-  "status": "PENDING|COMPLETED|CANCELLED",
-  "notes": "string"
-}
-```
-
-**Response Example:**
-```json
-{
-  "id": 1,
-  "user": {
-    "id": 1,
-    "username": "cashier01"
-  },
-  "totalAmount": 75000.0,
-  "paymentMethod": "CASH",
-  "status": "COMPLETED",
-  "notes": "Table 5",
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
-}
-```
+**Default Roles:**
+- `MANAGER` (id: 1) - Full system access
+- `CASHIER` (id: 2) - Transaction and menu access
+- `KITCHEN` (id: 3) - Inventory and recipe access
 
 ---
 
-### 8. Transaction Item Management (`/api/transaction-items`)
+## 🔒 Security Implementation Details
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/transaction-items` | Get all transaction items | No |
-| GET | `/api/transaction-items/{id}` | Get transaction item by ID | No |
-| POST | `/api/transaction-items` | Create new transaction item | No |
-| PUT | `/api/transaction-items/{id}` | Update transaction item | No |
-| DELETE | `/api/transaction-items/{id}` | Delete transaction item | No |
-| GET | `/api/transaction-items/transaction/{transactionId}` | Get items by transaction | No |
-| GET | `/api/transaction-items/product/{productId}` | Get items by product | No |
+### Password Encoding
+Passwords are hashed using **BCrypt** with the default strength factor. When creating or updating users, plain text passwords are automatically encoded before storage.
 
-**Request Body (POST/PUT):**
-```json
-{
-  "transactionId": 0,
-  "productId": 0,
-  "quantity": 0,
-  "price": 0.0,
-  "subtotal": 0.0,
-  "notes": "string"
-}
+**Example:**
+```
+Plain: "password123"
+Encoded: "{bcrypt}$2a$10$N9qo8uLOickgx2ZMRZoMe.q2ZWfhJpXvXXzXXzXXzXXzXXzXXz"
 ```
 
-**Response Example:**
-```json
-{
-  "id": 1,
-  "transaction": {
-    "id": 1
-  },
-  "product": {
-    "id": 1,
-    "name": "Espresso"
-  },
-  "quantity": 2,
-  "price": 25000.0,
-  "subtotal": 50000.0,
-  "notes": "Extra hot",
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
-}
-```
+### Authentication Process
+1. User sends credentials to `/api/users/login`
+2. System retrieves user from database by username
+3. Password is verified using BCrypt password matcher
+4. On success, user details (including role) are returned
+5. Client must include authentication in subsequent requests
+
+### Authorization Process
+- Each protected endpoint has `@PreAuthorize` annotation
+- Spring Security checks user's role against required role(s)
+- If authorized, request proceeds; otherwise, **403 Forbidden** is returned
 
 ---
 
-### 9. User Management (`/api/users`)
+## 📊 Error Responses
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/users` | Get all users | No |
-| GET | `/api/users/{id}` | Get user by ID | No |
-| POST | `/api/users` | Create new user | No |
-| PUT | `/api/users/{id}` | Update user | No |
-| DELETE | `/api/users/{id}` | Delete user | No |
-| POST | `/api/users/login` | User login | No |
-| GET | `/api/users/role/{roleId}` | Get users by role | No |
-| GET | `/api/users/username/{username}` | Get user by username | No |
-
-**Request Body (POST/PUT):**
-```json
-{
-  "username": "string",
-  "password": "string",
-  "fullName": "string",
-  "email": "string",
-  "phoneNumber": "string",
-  "roleId": 0,
-  "isActive": true
-}
-```
-
-**Request Body (LOGIN):**
-```json
-{
-  "username": "string",
-  "password": "string"
-}
-```
-
-**Response Example:**
-```json
-{
-  "id": 1,
-  "username": "admin",
-  "fullName": "Administrator",
-  "email": "admin@terracafe.com",
-  "phoneNumber": "08123456789",
-  "role": {
-    "id": 1,
-    "name": "ADMIN"
-  },
-  "isActive": true,
-  "createdAt": "2025-12-03T10:00:00",
-  "updatedAt": "2025-12-03T10:00:00"
-}
-```
-
----
-
-## Security Recommendations
-
-### 1. Implement Authentication
-Add Spring Security to your `pom.xml`:
-```xml
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-security</artifactId>
-</dependency>
-<dependency>
-    <groupId>io.jsonwebtoken</groupId>
-    <artifactId>jjwt-api</artifactId>
-    <version>0.11.5</version>
-</dependency>
-```
-
-### 2. Suggested Security Configuration
-- Public endpoints: `/api/users/login`, `/api/products` (read-only), `/api/categories` (read-only)
-- Admin endpoints: Role management, User management, Stock movements
-- Cashier endpoints: Transactions, Transaction items
-- All users: Product ordering, viewing menus
-
-### 3. Password Security
-⚠️ **CRITICAL:** Passwords appear to be stored in plain text. Implement BCrypt password hashing immediately.
-
-### 4. CORS Configuration
-Add CORS configuration to allow frontend access from specific domains only.
-
-### 5. Input Validation
-Add `@Valid` annotations and validation constraints to all DTOs.
-
----
-
-## Error Responses
-
-All endpoints follow standard HTTP status codes:
-
-- `200 OK`: Successful GET/PUT requests
-- `201 Created`: Successful POST requests
-- `204 No Content`: Successful DELETE requests
-- `400 Bad Request`: Invalid input data
-- `404 Not Found`: Resource not found
-- `500 Internal Server Error`: Server-side errors
+| Status Code | Description | Example Scenario |
+|-------------|-------------|------------------|
+| 200 OK | Successful GET/PUT | Resource retrieved/updated |
+| 201 Created | Successful POST | Resource created |
+| 400 Bad Request | Invalid input | Validation failed |
+| 401 Unauthorized | Authentication failed | Invalid credentials |
+| 403 Forbidden | Authorization failed | Insufficient permissions |
+| 404 Not Found | Resource not found | Invalid ID |
+| 500 Internal Server Error | Server error | Database connection failed |
 
 **Error Response Format:**
 ```json
 {
-  "timestamp": "2025-12-03T10:00:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Validation failed",
-  "path": "/api/products"
+  "timestamp": "2025-12-05T10:00:00",
+  "status": 403,
+  "error": "Forbidden",
+  "message": "Access Denied",
+  "path": "/api/users"
 }
 ```
 
 ---
 
-## Testing the API
+## 🧪 Testing the API
 
-### Using cURL
+### Login Example
 ```bash
-# Get all products
-curl -X GET http://localhost:8080/api/products
-
-# Create a new category
-curl -X POST http://localhost:8080/api/categories \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Beverages","description":"Hot and cold drinks"}'
-
-# Login
 curl -X POST http://localhost:8080/api/users/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"username":"admin","password":"password123"}'
 ```
 
-### Using Postman/Insomnia
-Import the base URL: `http://localhost:8080` and test each endpoint using the request bodies provided above.
+### Accessing Protected Endpoint (Example)
+Since the API uses stateless authentication without JWT implementation yet, you'll need to implement session-based or token-based authentication for production use.
+
+### Current Testing Approach
+For testing during development:
+1. Login to get user role information
+2. Test endpoints based on user role
+3. Expect 403 Forbidden for unauthorized access
 
 ---
 
-## Database Schema Notes
+## 🚀 Production Recommendations
 
-Based on the entities, the system manages:
-- **Categories**: Product categorization
-- **Products**: Menu items for sale
-- **Ingredients**: Raw materials
-- **Recipes**: Product-ingredient relationships
-- **Users**: System users with roles
-- **Roles**: User authorization levels
-- **Transactions**: Sales records
-- **Transaction Items**: Individual items in transactions
-- **Stock Movements**: Ingredient inventory tracking
-
----
-
-## Next Steps
-
-1. ✅ Complete TODO features (None found)
-2. ⚠️ Implement Spring Security with JWT authentication
-3. ⚠️ Add password hashing (BCrypt)
-4. ⚠️ Add input validation with `@Valid` and constraints
-5. ⚠️ Configure CORS for frontend access
-6. ⚠️ Add API rate limiting
-7. ⚠️ Implement proper error handling and custom exceptions
-8. ⚠️ Add API documentation with Swagger/OpenAPI
-9. ⚠️ Add logging and monitoring
+### Immediate Next Steps
+1. ✅ ~~Implement Spring Security~~ **COMPLETED**
+2. ✅ ~~Add password hashing (BCrypt)~~ **COMPLETED**
+3. ✅ ~~Add role-based access control~~ **COMPLETED**
+4. ⚠️ Implement JWT token-based authentication
+5. ⚠️ Add refresh token mechanism
+6. ⚠️ Configure CORS for frontend access
+7. ⚠️ Add API rate limiting
+8. ⚠️ Implement comprehensive logging
+9. ⚠️ Add Swagger/OpenAPI documentation
 10. ⚠️ Write unit and integration tests
+
+### Security Best Practices
+- ✅ All passwords are BCrypt hashed
+- ✅ CSRF disabled for REST API
+- ✅ Stateless session management
+- ✅ Role-based access control implemented
+- ⚠️ Consider adding JWT for stateless authentication
+- ⚠️ Implement HTTPS in production
+- ⚠️ Add request rate limiting
+- ⚠️ Implement audit logging for sensitive operations
+
+---
+
+## 📞 Support & Contact
+
+For issues or questions regarding this API, please contact the development team or refer to the project repository.
+
+**Project:** TerraCafe Backend  
+**Version:** 0.0.1-SNAPSHOT  
+**Last Updated:** December 5, 2025

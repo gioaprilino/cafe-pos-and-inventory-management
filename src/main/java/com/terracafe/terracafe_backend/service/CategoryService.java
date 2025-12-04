@@ -24,12 +24,25 @@ public class CategoryService {
     }
 
     public Category saveCategory(Category category) {
-        // TODO: Add validation (e.g., ensure name is not empty)
+        // Add validation (e.g., ensure name is not empty)
+        if (category.getName() == null || category.getName().isBlank()) {
+            throw new IllegalArgumentException("Category name cannot be empty");
+        }
         return categoryRepository.save(category);
     }
 
     public void deleteCategory(Long id) {
-        // TODO: Check if category is associated with any products before deleting
-        categoryRepository.deleteById(id);
+        // Check if category is associated with any products before deleting
+        Optional<Category> categoryOpt = categoryRepository.findById(id);
+        if (categoryOpt.isPresent()) {
+            Category category = categoryOpt.get();
+            if (category.getProducts() != null && !category.getProducts().isEmpty()) {
+                throw new RuntimeException("Cannot delete category '" + category.getName() + "' because it has " + 
+                                         category.getProducts().size() + " associated product(s). Please delete or reassign the products first.");
+            }
+            categoryRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Category not found with id: " + id);
+        }
     }
 }

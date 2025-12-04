@@ -15,7 +15,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name = "password_hash", nullable = false)
     @JsonIgnore // Jangan sertakan password hash di response JSON
     private String passwordHash;
 

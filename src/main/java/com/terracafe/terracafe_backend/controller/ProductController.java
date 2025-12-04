@@ -2,8 +2,10 @@ package com.terracafe.terracafe_backend.controller;
 
 import com.terracafe.terracafe_backend.model.Product;
 import com.terracafe.terracafe_backend.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,9 +36,8 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
         try {
             Product savedProduct = productService.saveProduct(product);
             return ResponseEntity.ok(savedProduct);
@@ -47,9 +48,8 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
         Optional<Product> existingProductOpt = productService.getProductById(id);
         if (existingProductOpt.isPresent()) {
             Product existingProduct = existingProductOpt.get();
@@ -74,9 +74,8 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('MANAGER')")
     public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
-        // TODO: Add authorization check (Manager only)
-        // TODO: Check if product is associated with recipes or transaction items before deletion
         try {
             productService.deleteProduct(id);
             return ResponseEntity.ok("Product deleted successfully");

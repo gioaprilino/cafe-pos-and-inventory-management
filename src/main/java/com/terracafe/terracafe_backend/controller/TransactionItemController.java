@@ -2,8 +2,10 @@ package com.terracafe.terracafe_backend.controller;
 
 import com.terracafe.terracafe_backend.model.TransactionItem;
 import com.terracafe.terracafe_backend.service.TransactionItemService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,9 +42,10 @@ public class TransactionItemController {
 
     // Update item (misalnya kuantitas) - biasanya hanya jika transaksi belum selesai
     @PutMapping("/{id}")
-    public ResponseEntity<TransactionItem> updateTransactionItem(@PathVariable Long id, @RequestBody TransactionItem transactionItemDetails) {
-        // TODO: Add authorization check (Manager or Cashier based on context)
-        // TODO: Add validation (@Valid)
+    @PreAuthorize("hasRole('MANAGER') or hasRole('CASHIER') or hasRole('ADMIN')")
+    public ResponseEntity<TransactionItem> updateTransactionItem(@PathVariable Long id, @Valid @RequestBody TransactionItem transactionItemDetails) {
+        // Authorization check (Manager or Cashier based on context)
+        // Validation (@Valid) is applied via @Valid annotation above
         try {
             TransactionItem updatedItem = transactionItemService.updateTransactionItem(id, transactionItemDetails);
             return ResponseEntity.ok(updatedItem);

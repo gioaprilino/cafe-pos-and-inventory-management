@@ -10,6 +10,7 @@ import com.terracafe.terracafe_backend.repository.RecipeRepository; // Pastikan 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,8 +42,9 @@ public class RecipeService {
     }
 
     public Recipe saveRecipe(Recipe recipe) {
-        // TODO: Add validation (e.g., product and ingredient exist, quantityNeeded > 0)
+        // Add validation (e.g., product and ingredient exist, quantityNeeded > 0)
         validateProductAndIngredient(recipe.getProduct(), recipe.getIngredient());
+        validateQuantity(recipe.getQuantityNeeded());
         return recipeRepository.save(recipe);
     }
 
@@ -50,8 +52,9 @@ public class RecipeService {
         Optional<Recipe> existingRecipeOpt = recipeRepository.findById(id);
         if (existingRecipeOpt.isPresent()) {
             Recipe existingRecipe = existingRecipeOpt.get();
-            // TODO: Add validation for recipeDetails fields
+            // Add validation for recipeDetails fields
             validateProductAndIngredient(recipeDetails.getProduct(), recipeDetails.getIngredient());
+            validateQuantity(recipeDetails.getQuantityNeeded());
 
             existingRecipe.setProduct(recipeDetails.getProduct());
             existingRecipe.setIngredient(recipeDetails.getIngredient());
@@ -64,7 +67,12 @@ public class RecipeService {
     }
 
     public void deleteRecipe(Long id) {
-        recipeRepository.deleteById(id);
+        Optional<Recipe> recipeOpt = recipeRepository.findById(id);
+        if (recipeOpt.isPresent()) {
+            recipeRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Recipe not found with id: " + id);
+        }
     }
 
     // Metode bantuan untuk validasi produk dan bahan
@@ -73,11 +81,22 @@ public class RecipeService {
             if (!productRepository.existsById(product.getId())) {
                 throw new RuntimeException("Product not found with id: " + product.getId());
             }
+        } else {
+            throw new RuntimeException("Product is required for recipe");
         }
         if (ingredient != null && ingredient.getId() != null) {
             if (!ingredientRepository.existsById(ingredient.getId())) {
                 throw new RuntimeException("Ingredient not found with id: " + ingredient.getId());
             }
+        } else {
+            throw new RuntimeException("Ingredient is required for recipe");
+        }
+    }
+
+    // Metode bantuan untuk validasi kuantitas
+    private void validateQuantity(BigDecimal quantity) {
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Quantity needed must be greater than 0");
         }
     }
 }

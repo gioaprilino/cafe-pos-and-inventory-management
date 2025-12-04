@@ -1,5 +1,6 @@
 package com.terracafe.terracafe_backend.service;
 
+import com.terracafe.terracafe_backend.model.Transaction;
 import com.terracafe.terracafe_backend.model.TransactionItem;
 import com.terracafe.terracafe_backend.repository.TransactionItemRepository; // Pastikan repository ini ada
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,11 +37,12 @@ public class TransactionItemService {
          Optional<TransactionItem> existingItemOpt = transactionItemRepository.findById(id);
          if (existingItemOpt.isPresent()) {
              TransactionItem existingItem = existingItemOpt.get();
-             // TODO: Add validation for transactionItemDetails fields
+             // Add validation for transactionItemDetails fields
+             validateTransactionItemFields(transactionItemDetails);
              // Validasi: hanya bisa diupdate jika transaksi belum selesai/completed
-             // if (existingItem.getTransaction().getStatus() == Transaction.TransactionStatus.COMPLETED) {
-             //     throw new RuntimeException("Cannot update item of a completed transaction.");
-             // }
+             if (existingItem.getTransaction().getStatus() == Transaction.TransactionStatus.COMPLETED) {
+                 throw new RuntimeException("Cannot update item of a completed transaction.");
+             }
 
              existingItem.setQuantity(transactionItemDetails.getQuantity());
              // Harga dan subtotal mungkin perlu dihitung ulang
@@ -53,7 +55,23 @@ public class TransactionItemService {
     }
 
     public void deleteTransactionItem(Long id) {
-        // TODO: Check if deletion is allowed (e.g., transaction not completed)
-        transactionItemRepository.deleteById(id);
+        // Check if deletion is allowed (e.g., transaction not completed)
+        Optional<TransactionItem> itemOpt = transactionItemRepository.findById(id);
+        if (itemOpt.isPresent()) {
+            TransactionItem item = itemOpt.get();
+            if (item.getTransaction().getStatus() == Transaction.TransactionStatus.COMPLETED) {
+                throw new RuntimeException("Cannot delete item from a completed transaction.");
+            }
+            transactionItemRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("TransactionItem not found with id: " + id);
+        }
+    }
+
+    // Metode bantuan untuk validasi field
+    private void validateTransactionItemFields(TransactionItem item) {
+        if (item.getQuantity() == null || item.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
     }
 }
