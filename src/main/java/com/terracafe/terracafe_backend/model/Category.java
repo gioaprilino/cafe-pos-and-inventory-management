@@ -1,5 +1,6 @@
 package com.terracafe.terracafe_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class Category {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore // Hindari circular reference: Category -> Product -> Category -> ...
     private List<Product> products;
 
     // Constructors

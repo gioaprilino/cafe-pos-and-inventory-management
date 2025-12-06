@@ -102,11 +102,15 @@ public class UserController {
                     .body(new LoginResponse(null, null, null, null, "Invalid credentials"));
         }
 
+        // Generate JWT token
+        String token = userService.generateJwtToken(user);
+
         LoginResponse response = new LoginResponse(
             user.getId(),
             user.getUsername(),
             user.getRole().getId().toString(),
             user.getRole().getName(),
+            token,
             "Login successful"
         );
         return ResponseEntity.ok(response);

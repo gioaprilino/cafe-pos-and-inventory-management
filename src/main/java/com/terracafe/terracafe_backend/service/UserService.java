@@ -2,6 +2,7 @@ package com.terracafe.terracafe_backend.service;
 
 import com.terracafe.terracafe_backend.model.User;
 import com.terracafe.terracafe_backend.repository.UserRepository;
+import com.terracafe.terracafe_backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,9 @@ public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -62,5 +66,14 @@ public class UserService {
             return passwordEncoder.matches(password, storedPassword);
         }
         return false;
+    }
+
+    // Generate JWT token for user
+    public String generateJwtToken(User user) {
+        return jwtUtil.generateToken(
+            user.getUsername(),
+            user.getRole().getName().toUpperCase(), // Uppercase untuk konsistensi dengan Spring Security
+            user.getId()
+        );
     }
 }
