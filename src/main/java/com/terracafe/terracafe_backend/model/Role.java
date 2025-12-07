@@ -1,9 +1,12 @@
 package com.terracafe.terracafe_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "roles")
 public class Role {
 
@@ -15,6 +18,7 @@ public class Role {
     private String name;
 
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore // Jangan serialisasi daftar users dari sisi role untuk mencegah pengulangan/rekursi
     private List<User> users;
 
     // Constructors

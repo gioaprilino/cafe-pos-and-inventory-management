@@ -54,6 +54,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints - dapat diakses tanpa autentikasi
                 .requestMatchers("/api/users/login").permitAll()
+                // Permit the error path so anonymous clients don't get 403 when an error page is produced
+                .requestMatchers("/error").permitAll()
+                // Also allow non-API /products path in case front-end uses that path
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/products/**").permitAll()
                 
                 // Products and Categories - read only untuk display menu
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**").permitAll()

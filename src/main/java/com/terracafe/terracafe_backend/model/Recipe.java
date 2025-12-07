@@ -1,10 +1,12 @@
 package com.terracafe.terracafe_backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "recipes", uniqueConstraints = @UniqueConstraint(columnNames = {"product_id", "ingredient_id"}))
 public class Recipe {
 
