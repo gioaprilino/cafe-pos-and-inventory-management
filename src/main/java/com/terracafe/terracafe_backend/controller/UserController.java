@@ -4,13 +4,16 @@ import com.terracafe.terracafe_backend.dto.LoginRequest;
 import com.terracafe.terracafe_backend.dto.LoginResponse;
 import com.terracafe.terracafe_backend.model.User;
 import com.terracafe.terracafe_backend.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -114,5 +117,40 @@ public class UserController {
             "Login successful"
         );
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
+        // Extract token dari Authorization header
+        String authHeader = request.getHeader("Authorization");
+        String token = null;
+        String username = null;
+        
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+            try {
+                username = userService.extractUsernameFromToken(token);
+            } catch (Exception e) {
+                // Token tidak valid, tapi tetap return success untuk logout
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Logout successful");
+                response.put("status", "success");
+                return ResponseEntity.ok(response);
+            }
+        }
+        
+        // Panggil service untuk logout (bisa diperluas untuk blacklist token)
+        boolean logoutSuccess = userService.logout(token, username);
+        
+        Map<String, String> response = new HashMap<>();
+        if (logoutSuccess) {
+            response.put("message", "Logout successful");
+            response.put("status", "success");
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("message", "Logout failed");
+            response.put("status", "error");
+            return ResponseEntity.status(400).body(response);
+        }
     }
 }

@@ -76,4 +76,32 @@ public class UserService {
             user.getId()
         );
     }
+
+    // Extract username dari token
+    public String extractUsernameFromToken(String token) {
+        return jwtUtil.extractUsername(token);
+    }
+
+    // Logout method - untuk implementasi stateless JWT
+    public boolean logout(String token, String username) {
+        // Untuk JWT stateless, logout dilakukan di client side dengan menghapus token
+        // Method ini bisa diperluas untuk:
+        // 1. Token blacklisting jika diperlukan
+        // 2. Logging aktivitas logout
+        // 3. Invalidasi refresh token jika ada
+        
+        if (token != null && username != null) {
+            // Log aktivitas logout untuk audit trail
+            System.out.println("User " + username + " logged out successfully");
+            
+            // TODO: Implementasi token blacklisting jika diperlukan
+            // blacklistedTokens.add(token);
+            
+            return true;
+        }
+        
+        // Jika token null atau username null, tetap anggap logout berhasil
+        // karena tujuan logout adalah menghapus session/token
+        return true;
+    }
 }

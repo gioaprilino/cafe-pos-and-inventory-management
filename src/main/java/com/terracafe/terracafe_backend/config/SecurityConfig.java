@@ -63,6 +63,9 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**").permitAll()
                 
+                // Logout endpoint - dapat diakses tanpa autentikasi (graceful logout)
+                .requestMatchers("/api/users/logout").permitAll()
+                
                 // Semua endpoint lain memerlukan autentikasi dan akan diatur dengan @PreAuthorize
                 .anyRequest().authenticated()
             )
