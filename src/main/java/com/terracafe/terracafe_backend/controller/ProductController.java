@@ -49,18 +49,38 @@ public class ProductController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
         Optional<Product> existingProductOpt = productService.getProductById(id);
         if (existingProductOpt.isPresent()) {
             Product existingProduct = existingProductOpt.get();
-            // Update fields based on productDetails
-            existingProduct.setName(productDetails.getName());
-            existingProduct.setCategory(productDetails.getCategory());
-            existingProduct.setPrice(productDetails.getPrice());
-            existingProduct.setDescription(productDetails.getDescription());
-            existingProduct.setImageUrl(productDetails.getImageUrl());
-            existingProduct.setIsActive(productDetails.getIsActive());
+            
+            // Update hanya field yang tidak null
+            if (productDetails.getName() != null) {
+                if (productDetails.getName().isBlank()) {
+                    return ResponseEntity.badRequest().build(); // Reject empty name
+                }
+                existingProduct.setName(productDetails.getName());
+            }
+            if (productDetails.getCategory() != null) {
+                existingProduct.setCategory(productDetails.getCategory());
+            }
+            if (productDetails.getPrice() != null) {
+                if (productDetails.getPrice().compareTo(java.math.BigDecimal.ZERO) < 0) {
+                    return ResponseEntity.badRequest().build(); // Reject negative price
+                }
+                existingProduct.setPrice(productDetails.getPrice());
+            }
+            if (productDetails.getDescription() != null) {
+                existingProduct.setDescription(productDetails.getDescription());
+            }
+            if (productDetails.getImageUrl() != null) {
+                existingProduct.setImageUrl(productDetails.getImageUrl());
+            }
+            if (productDetails.getIsActive() != null) {
+                existingProduct.setIsActive(productDetails.getIsActive());
+            }
             // createdAt tidak diupdate
+            
             try {
                 Product updatedProduct = productService.updateProduct(id, existingProduct); // Pass id explicitly
                 return ResponseEntity.ok(updatedProduct);

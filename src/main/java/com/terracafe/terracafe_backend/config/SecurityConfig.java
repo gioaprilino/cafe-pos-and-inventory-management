@@ -17,6 +17,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -48,20 +53,38 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","X-Requested-With"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) // Nonaktifkan CSRF untuk REST API
+            .cors(cors -> {}) // Aktifkan CORS dengan bean corsConfigurationSource()
             .authorizeHttpRequests(auth -> auth
+                // Izinkan preflight CORS
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints - dapat diakses tanpa autentikasi
                 .requestMatchers("/api/users/login").permitAll()
                 // Permit the error path so anonymous clients don't get 403 when an error page is produced
                 .requestMatchers("/error").permitAll()
                 // Also allow non-API /products path in case front-end uses that path
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
                 
                 // Products and Categories - read only untuk display menu
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 
                 // Logout endpoint - dapat diakses tanpa autentikasi (graceful logout)
                 .requestMatchers("/api/users/logout").permitAll()

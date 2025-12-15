@@ -31,6 +31,18 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
+    public Category updateCategory(Category category) {
+        // Untuk update, validasi hanya dilakukan jika category sudah memiliki ID
+        // dan nama tidak null/blank (karena sudah ada data sebelumnya)
+        if (category.getId() == null) {
+            throw new IllegalArgumentException("Category ID is required for update");
+        }
+        if (category.getName() == null || category.getName().isBlank()) {
+            throw new IllegalArgumentException("Category name cannot be empty");
+        }
+        return categoryRepository.save(category);
+    }
+
     public void deleteCategory(Long id) {
         // Check if category is associated with any products before deleting
         Optional<Category> categoryOpt = categoryRepository.findById(id);

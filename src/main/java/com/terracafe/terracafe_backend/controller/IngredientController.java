@@ -73,14 +73,32 @@ public class IngredientController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<Ingredient> updateIngredient(@PathVariable Long id, @Valid @RequestBody Ingredient ingredientDetails) {
+    public ResponseEntity<Ingredient> updateIngredient(@PathVariable Long id, @RequestBody Ingredient ingredientDetails) {
         Optional<Ingredient> existingIngredientOpt = ingredientService.getIngredientById(id);
         if (existingIngredientOpt.isPresent()) {
             Ingredient existingIngredient = existingIngredientOpt.get();
-            existingIngredient.setName(ingredientDetails.getName());
-            existingIngredient.setUnit(ingredientDetails.getUnit());
-            existingIngredient.setMinimumStockThreshold(ingredientDetails.getMinimumStockThreshold());
+            
+            // Update hanya field yang tidak null
+            if (ingredientDetails.getName() != null) {
+                if (ingredientDetails.getName().isBlank()) {
+                    return ResponseEntity.badRequest().build(); // Reject empty name
+                }
+                existingIngredient.setName(ingredientDetails.getName());
+            }
+            if (ingredientDetails.getUnit() != null) {
+                if (ingredientDetails.getUnit().isBlank()) {
+                    return ResponseEntity.badRequest().build(); // Reject empty unit
+                }
+                existingIngredient.setUnit(ingredientDetails.getUnit());
+            }
+            if (ingredientDetails.getMinimumStockThreshold() != null) {
+                if (ingredientDetails.getMinimumStockThreshold() < 0) {
+                    return ResponseEntity.badRequest().build(); // Reject negative threshold
+                }
+                existingIngredient.setMinimumStockThreshold(ingredientDetails.getMinimumStockThreshold());
+            }
             // createdAt tidak diupdate
+            
             try {
                 Ingredient updatedIngredient = ingredientService.updateIngredient(id, existingIngredient); // Pass id explicitly
                 return ResponseEntity.ok(updatedIngredient);

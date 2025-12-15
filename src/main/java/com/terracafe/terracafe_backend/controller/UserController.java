@@ -59,20 +59,33 @@ public class UserController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.id")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User userDetails) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         Optional<User> existingUser = userService.getUserById(id);
         if (existingUser.isPresent()) {
             User updatedUser = existingUser.get();
-            if (userDetails.getUsername() != null && !userDetails.getUsername().isBlank()) {
+            
+            // Update hanya field yang tidak null
+            if (userDetails.getUsername() != null) {
+                if (userDetails.getUsername().isBlank()) {
+                    return ResponseEntity.badRequest().build(); // Reject empty username
+                }
                 updatedUser.setUsername(userDetails.getUsername());
             }
-            if (userDetails.getPasswordHash() != null && !userDetails.getPasswordHash().isBlank()) {
+            if (userDetails.getPasswordHash() != null) {
+                if (userDetails.getPasswordHash().isBlank()) {
+                    return ResponseEntity.badRequest().build(); // Reject empty password
+                }
                 updatedUser.setPasswordHash(userDetails.getPasswordHash());
             }
             if (userDetails.getRole() != null) {
                 updatedUser.setRole(userDetails.getRole());
             }
-            return ResponseEntity.ok(userService.saveUser(updatedUser));
+            
+            try {
+                return ResponseEntity.ok(userService.saveUser(updatedUser));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().build();
+            }
         } else {
             return ResponseEntity.notFound().build();
         }

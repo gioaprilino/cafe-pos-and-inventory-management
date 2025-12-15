@@ -44,11 +44,18 @@ public class RoleController {
     @PutMapping("/{id}")
     public ResponseEntity<Role> updateRole(@PathVariable Long id, @RequestBody Role roleDetails) {
         // TODO: Add authorization check (Manager only)
-        // TODO: Add validation (@Valid)
         Optional<Role> existingRoleOpt = roleService.getRoleById(id);
         if (existingRoleOpt.isPresent()) {
             Role existingRole = existingRoleOpt.get();
-            existingRole.setName(roleDetails.getName()); // Update fields as needed
+            
+            // Update hanya field yang tidak null
+            if (roleDetails.getName() != null) {
+                if (roleDetails.getName().isBlank()) {
+                    return ResponseEntity.badRequest().build(); // Reject empty name
+                }
+                existingRole.setName(roleDetails.getName());
+            }
+            
             try {
                 Role updatedRole = roleService.saveRole(existingRole);
                 return ResponseEntity.ok(updatedRole);

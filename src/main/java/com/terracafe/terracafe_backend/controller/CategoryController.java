@@ -48,17 +48,27 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('MANAGER') or hasRole('ADMIN')")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @Valid @RequestBody Category categoryDetails) {
+    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category categoryDetails) {
         // Authorization check (Manager only)
-        // Validation (@Valid) is applied via @Valid annotation above
+        // Tidak menggunakan @Valid untuk mendukung partial update
         Optional<Category> existingCategoryOpt = categoryService.getCategoryById(id);
         if (existingCategoryOpt.isPresent()) {
             Category existingCategory = existingCategoryOpt.get();
-            existingCategory.setName(categoryDetails.getName());
-            existingCategory.setDescription(categoryDetails.getDescription());
+            
+            // Update hanya field yang tidak null dan tidak blank
+            if (categoryDetails.getName() != null) {
+                if (categoryDetails.getName().isBlank()) {
+                    return ResponseEntity.badRequest().build(); // Reject empty name
+                }
+                existingCategory.setName(categoryDetails.getName());
+            }
+            if (categoryDetails.getDescription() != null) {
+                existingCategory.setDescription(categoryDetails.getDescription());
+            }
             // createdAt tidak diupdate
+            
             try {
-                Category updatedCategory = categoryService.saveCategory(existingCategory);
+                Category updatedCategory = categoryService.updateCategory(existingCategory);
                 return ResponseEntity.ok(updatedCategory);
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().build();
