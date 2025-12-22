@@ -75,6 +75,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Izinkan preflight CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // Public endpoints - dapat diakses tanpa autentikasi
                 .requestMatchers("/api/users/login").permitAll()
                 // Permit the error path so anonymous clients don't get 403 when an error page is produced
