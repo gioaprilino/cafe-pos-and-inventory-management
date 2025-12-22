@@ -42,27 +42,35 @@ public class TransactionService {
         return transactionRepository.findById(id);
     }
 
-    // Contoh method untuk membuat transaksi baru (ini adalah inti dari logika bisnis)
-    public Transaction createTransaction(List<TransactionItemRequest> itemRequests, Long cashierId) { // TransactionItemRequest adalah DTO untuk input
+    // Contoh method untuk membuat transaksi baru (ini adalah inti dari logika
+    // bisnis)
+    public Transaction createTransaction(List<TransactionItemRequest> itemRequests, Long cashierId) { // TransactionItemRequest
+                                                                                                      // adalah DTO
+                                                                                                      // untuk input
         // 1. Validasi kasir
         User cashier = userService.getUserById(cashierId)
-            .orElseThrow(() -> new RuntimeException("Cashier not found with id: " + cashierId)); // Or throw custom exception
+                .orElseThrow(() -> new RuntimeException("Cashier not found with id: " + cashierId)); // Or throw custom
+                                                                                                     // exception
 
         // 2. Hitung total dan validasi item
         BigDecimal totalAmount = BigDecimal.ZERO;
         Transaction transaction = new Transaction();
         transaction.setCashier(cashier);
-        transaction.setStatus(Transaction.TransactionStatus.PENDING); // Atau COMPLETED langsung jika pembayaran langsung
+        transaction.setStatus(Transaction.TransactionStatus.COMPLETED); // Set langsung ke COMPLETED untuk POS kasir
         transaction.setTransactionNumber(generateTransactionNumber()); // Generate nomor unik
 
         for (TransactionItemRequest requestItem : itemRequests) {
             // Ambil produk dari database
             Product product = productRepository.findById(requestItem.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + requestItem.getProductId())); // Or throw custom exception
+                    .orElseThrow(
+                            () -> new RuntimeException("Product not found with id: " + requestItem.getProductId())); // Or
+                                                                                                                     // throw
+                                                                                                                     // custom
+                                                                                                                     // exception
 
             // Validasi stok produk aktif (opsional)
             if (!product.getIsActive()) {
-                 throw new RuntimeException("Cannot add inactive product '" + product.getName() + "' to transaction.");
+                throw new RuntimeException("Cannot add inactive product '" + product.getName() + "' to transaction.");
             }
 
             // Hitung subtotal untuk item ini
@@ -88,7 +96,7 @@ public class TransactionService {
 
         // 4. (Opsional) Jika status langsung COMPLETED, kurangi stok otomatis
         if (savedTransaction.getStatus() == Transaction.TransactionStatus.COMPLETED) {
-             consumeStockForTransaction(savedTransaction);
+            consumeStockForTransaction(savedTransaction);
         }
 
         return savedTransaction;
@@ -122,6 +130,7 @@ public class TransactionService {
                 stockOutMovement.setReferenceType("TRANSACTION");
                 stockOutMovement.setReferenceId(transaction.getId());
                 stockOutMovement.setDescription("Consumed for " + quantitySold + " x " + item.getProduct().getName());
+                stockOutMovement.setCreatedByUser(transaction.getCashier());
 
                 // Simpan pergerakan stok (ini akan memicu perhitungan ulang stok)
                 stockMovementService.saveStockMovement(stockOutMovement);
@@ -139,9 +148,9 @@ public class TransactionService {
 
             existingTransaction.setStatus(newStatus);
             if (newStatus == Transaction.TransactionStatus.COMPLETED && existingTransaction.getCompletedAt() == null) {
-                 existingTransaction.setCompletedAt(LocalDateTime.now());
-                 // Kurangi stok jika status menjadi COMPLETED dan sebelumnya belum dikurangi
-                 consumeStockForTransaction(existingTransaction);
+                existingTransaction.setCompletedAt(LocalDateTime.now());
+                // Kurangi stok jika status menjadi COMPLETED dan sebelumnya belum dikurangi
+                consumeStockForTransaction(existingTransaction);
             }
 
             return transactionRepository.save(existingTransaction);

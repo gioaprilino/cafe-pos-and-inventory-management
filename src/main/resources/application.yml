@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/cafe_db
+    username: gio
+    password: gio042005
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # atau 'update' saat development awal
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: true
+
+  thymeleaf:
+    enabled: true
+    cache: false # nonaktifkan cache saat development
+
+  security:
+    user:
+      name: admin
+      password: admin

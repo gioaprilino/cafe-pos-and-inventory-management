@@ -38,7 +38,7 @@ public class Transaction {
     // Relasi ke TransactionItem (satu transaksi bisa punya banyak item)
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnore // Hindari loop jika diakses dari sini
-    private List<TransactionItem> items;
+    private List<TransactionItem> items = new java.util.ArrayList<>();
 
     // Enum untuk status
     public enum TransactionStatus {
@@ -46,7 +46,9 @@ public class Transaction {
     }
 
     // Constructors
-    public Transaction() {}
+    public Transaction() {
+    }
+
     public Transaction(String transactionNumber, User cashier, BigDecimal totalAmount, TransactionStatus status) {
         this.transactionNumber = transactionNumber;
         this.cashier = cashier;
@@ -72,27 +74,67 @@ public class Transaction {
     }
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getTransactionNumber() { return transactionNumber; }
-    public void setTransactionNumber(String transactionNumber) { this.transactionNumber = transactionNumber; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public User getCashier() { return cashier; }
-    public void setCashier(User cashier) { this.cashier = cashier; }
+    public String getTransactionNumber() {
+        return transactionNumber;
+    }
 
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public void setTransactionNumber(String transactionNumber) {
+        this.transactionNumber = transactionNumber;
+    }
 
-    public TransactionStatus getStatus() { return status; }
-    public void setStatus(TransactionStatus status) { this.status = status; }
+    public User getCashier() {
+        return cashier;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setCashier(User cashier) {
+        this.cashier = cashier;
+    }
 
-    public LocalDateTime getCompletedAt() { return completedAt; }
-    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
 
-    public List<TransactionItem> getItems() { return items; }
-    public void setItems(List<TransactionItem> items) { this.items = items; }
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public List<TransactionItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<TransactionItem> items) {
+        this.items = items;
+    }
 }

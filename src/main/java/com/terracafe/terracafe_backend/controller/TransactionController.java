@@ -35,31 +35,33 @@ public class TransactionController {
     public ResponseEntity<Transaction> getTransactionById(@PathVariable Long id) {
         Optional<Transaction> transaction = transactionService.getTransactionById(id);
         return transaction.map(ResponseEntity::ok)
-                          .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    // Endpoint untuk membuat transaksi baru (untuk kasir)
     @PostMapping
     @PreAuthorize("hasRole('CASHIER')")
-    public ResponseEntity<Transaction> createTransaction(@Valid @RequestBody List<TransactionItemRequest> itemRequests, @RequestParam Long cashierId) {
+    public ResponseEntity<?> createTransaction(@Valid @RequestBody List<TransactionItemRequest> itemRequests,
+            @RequestParam Long cashierId) {
         try {
             Transaction newTransaction = transactionService.createTransaction(itemRequests, cashierId);
             return ResponseEntity.ok(newTransaction);
         } catch (RuntimeException e) {
-            // Handle potential errors (e.g., product not found, cashier not found, insufficient stock)
-            return ResponseEntity.badRequest().body(null); // Or return error details
+            e.printStackTrace(); // Log error to console
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     // Endpoint untuk mengupdate status transaksi (misalnya oleh kasir atau manager)
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('MANAGER') or hasRole('CASHIER')")
-    public ResponseEntity<Transaction> updateTransactionStatus(@PathVariable Long id, @RequestParam Transaction.TransactionStatus newStatus) {
+    public ResponseEntity<Transaction> updateTransactionStatus(@PathVariable Long id,
+            @RequestParam Transaction.TransactionStatus newStatus) {
         try {
             Transaction updatedTransaction = transactionService.updateTransactionStatus(id, newStatus);
             return ResponseEntity.ok(updatedTransaction);
         } catch (RuntimeException e) {
-            // Handle potential errors (e.g., transaction not found, invalid status transition)
+            // Handle potential errors (e.g., transaction not found, invalid status
+            // transition)
             return ResponseEntity.badRequest().body(null); // Or return error details
         }
     }
@@ -74,8 +76,11 @@ public class TransactionController {
         return ResponseEntity.ok(report);
     }
 
-    // DELETE biasanya tidak digunakan untuk transaksi karena penting untuk audit trail
-    // Jika tetap dibutuhkan (misalnya hanya untuk draft), tambahkan method delete dengan hati-hati
+    // DELETE biasanya tidak digunakan untuk transaksi karena penting untuk audit
+    // trail
+    // Jika tetap dibutuhkan (misalnya hanya untuk draft), tambahkan method delete
+    // dengan hati-hati
     // @DeleteMapping("/{id}")
-    // public ResponseEntity<String> deleteTransaction(@PathVariable Long id) { ... }
+    // public ResponseEntity<String> deleteTransaction(@PathVariable Long id) { ...
+    // }
 }

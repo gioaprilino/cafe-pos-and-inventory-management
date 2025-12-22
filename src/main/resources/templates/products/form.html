@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/main :: layout(~{::div})}" xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0" th:text="${product.id == null ? 'Add New Product' : 'Edit Product'}">Form
+                            Product</h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/products/save}" th:object="${product}" method="post">
+                            <input type="hidden" th:field="*{id}" />
+
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="name" th:field="*{name}" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="category" class="form-label">Category</label>
+                                    <select class="form-select" id="category" th:field="*{category.id}" required>
+                                        <option value="">Select Category</option>
+                                        <option th:each="cat : ${categories}" th:value="${cat.id}"
+                                            th:text="${cat.name}">Category Name</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="price" class="form-label">Price (Rp)</label>
+                                    <input type="number" class="form-control" id="price" th:field="*{price}" min="0"
+                                        required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" th:field="*{description}"
+                                    rows="3"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="imageUrl" class="form-label">Image URL</label>
+                                <input type="url" class="form-control" id="imageUrl" th:field="*{imageUrl}"
+                                    placeholder="https://example.com/image.jpg">
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="isActive" th:field="*{isActive}">
+                                <label class="form-check-label" for="isActive">Active Status</label>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="/products" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary">Save Product</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

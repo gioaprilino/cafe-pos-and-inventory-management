@@ -1,0 +1,62 @@
+<div th:fragment="sidebar">
+    <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none p-3">
+        <span class="fs-4">TerraCafe</span>
+    </div>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+            <a href="/dashboard" class="nav-link" th:classappend="${currentUri == '/dashboard' ? 'active' : ''}">
+                <i class="bi bi-speedometer2 me-2"></i>
+                Dashboard
+            </a>
+        </li>
+        <li>
+            <a href="/products" class="nav-link"
+                th:classappend="${currentUri != null && currentUri.startsWith('/products') ? 'active' : ''}">
+                <i class="bi bi-cup me-2"></i>
+                Products
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="/pos" class="nav-link" th:classappend="${currentUri == '/pos' ? 'active' : ''}">
+                <i class="bi bi-cart4 me-2"></i>
+                Point of Sale
+            </a>
+        </li>
+        <li>
+            <a href="/categories" class="nav-link">
+                <i class="bi bi-grid me-2"></i>
+                Categories
+            </a>
+        </li>
+        <li>
+            <a href="/users" class="nav-link">
+                <i class="bi bi-people me-2"></i>
+                Users
+            </a>
+        </li>
+        <li>
+            <a href="/transactions" class="nav-link">
+                <i class="bi bi-cash-coin me-2"></i>
+                Transactions
+            </a>
+        </li>
+    </ul>
+    <hr>
+    <div class="dropdown p-3">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <strong th:text="${currentUser}">User</strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+            <li><a class="dropdown-item" href="#">Profile</a></li>
+            <li>
+                <hr class="dropdown-divider">
+            </li>
+            <li>
+                <form th:action="@{/logout}" method="post"><button class="dropdown-item" type="submit">Sign out</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</div>

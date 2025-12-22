@@ -56,8 +56,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","X-Requested-With"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
@@ -70,36 +70,42 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable()) // Nonaktifkan CSRF untuk REST API
-            .cors(cors -> {}) // Aktifkan CORS dengan bean corsConfigurationSource()
-            .authorizeHttpRequests(auth -> auth
-                // Izinkan preflight CORS
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // Public endpoints - dapat diakses tanpa autentikasi
-                .requestMatchers("/api/users/login").permitAll()
-                // Permit the error path so anonymous clients don't get 403 when an error page is produced
-                .requestMatchers("/error").permitAll()
-                // Also allow non-API /products path in case front-end uses that path
-                .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-                
-                // Products and Categories - read only untuk display menu
-                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                
-                // Logout endpoint - dapat diakses tanpa autentikasi (graceful logout)
-                .requestMatchers("/api/users/logout").permitAll()
-                
-                // Semua endpoint lain memerlukan autentikasi dan akan diatur dengan @PreAuthorize
-                .anyRequest().authenticated()
-            )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // REST API stateless dengan JWT
-            )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .httpBasic(basic -> basic.disable()) // Nonaktifkan HTTP Basic Auth
-            .formLogin(form -> form.disable()); // Nonaktifkan form login
+                .csrf(csrf -> csrf.disable()) // Disable CSRF for simplicity in this hybrid mode
+                .cors(cors -> {
+                })
+                .authorizeHttpRequests(auth -> auth
+                        // Static resources
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+
+                        // Swagger UI
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // Public endpoints
+                        .requestMatchers("/api/users/login").permitAll()
+                        .requestMatchers("/login", "/error").permitAll()
+
+                        // Public View Endpoints (if any, e.g. landing page)
+                        // .requestMatchers("/").permitAll()
+
+                        // API Read-only
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+
+                        // All other requests require authentication
+                        .anyRequest().authenticated())
+                // Session management: IF_REQUIRED is default, allows sessions for browser users
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/dashboard", true)
+                        .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/login?logout")
+                        .permitAll());
 
         return http.build();
     }

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/main}">
+
+<head>
+    <title>Point of Sales</title>
+    <style>
+        .product-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .product-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .cart-item-actions button {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scrollable-products {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="row h-100">
+            <!-- Products Column -->
+            <div class="col-md-8 d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                    <h2 class="h4 m-0">Menu</h2>
+                    <div class="d-flex gap-2">
+                        <select id="categoryFilter" class="form-select form-select-sm" style="width: 150px;">
+                            <option value="all">All Categories</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Category
+                            </option>
+                        </select>
+                        <input type="text" id="searchInput" class="form-control form-control-sm"
+                            placeholder="Search product..." style="width: 200px;">
+                    </div>
+                </div>
+
+                <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3 scrollable-products p-2" id="productsGrid">
+                    <div class="col product-item" th:each="product : ${products}" th:data-id="${product.id}"
+                        th:data-name="${product.name}" th:data-price="${product.price}"
+                        th:data-category="${product.category != null ? product.category.id : '0'}"
+                        th:if="${product.isActive}"> <!-- Only show active products -->
+                        <div class="card h-100 product-card border-0 shadow-sm" onclick="addToCart(this)">
+                            <!-- Placeholder image or actual image if available -->
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                                style="height: 120px;">
+                                <i class="bi bi-cup-hot fs-1 text-secondary"></i>
+                            </div>
+                            <div class="card-body p-2 text-center">
+                                <h6 class="card-title text-truncate mb-1" th:text="${product.name}">Product Name</h6>
+                                <p class="card-text text-primary fw-bold mb-0"
+                                    th:text="${'Rp ' + #numbers.formatDecimal(product.price, 0, 'POINT', 0, 'COMMA')}">
+                                    Rp 0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Column -->
+            <div class="col-md-4 d-flex flex-column h-100 border-start bg-light">
+                <div class="p-3 border-bottom bg-white">
+                    <h2 class="h4 m-0">Current Order</h2>
+                    <small class="text-muted"
+                        th:text="${#temporals.format(#temporals.createNow(), 'dd MMM yyyy')}">Date</small>
+                </div>
+
+                <div class="flex-grow-1 overflow-auto p-3" id="cartItems">
+                    <!-- Cart items will be injected here via JS -->
+                    <div class="text-center text-muted mt-5" id="emptyCartMessage">
+                        <i class="bi bi-cart fs-1"></i>
+                        <p>No items in cart</p>
+                    </div>
+                </div>
+
+                <div class="p-3 border-top bg-white">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span class="fw-bold" id="cartSubtotal">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="h5">Total</span>
+                        <span class="h5 text-primary" id="cartTotal">Rp 0</span>
+                    </div>
+                    <!-- Hidden inputs for data -->
+                    <input type="hidden" id="cashierId" th:value="${cashierId}">
+
+                    <button class="btn btn-primary w-100 py-2 mb-2" onclick="checkout()" id="checkoutBtn" disabled>
+                        <i class="bi bi-receipt me-2"></i> Convert to Order
+                    </button>
+                    <button class="btn btn-outline-danger w-100 py-1" onclick="clearCart()" id="clearBtn" disabled>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipt Modal -->
+        <div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Receipt</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="receiptBody">
+                        <!-- Receipt content -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="printReceipt()">Print</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="/js/pos.js"></script>
+    </div>
+</body>
+
+</html>

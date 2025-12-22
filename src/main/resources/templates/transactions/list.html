@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout/main}">
+
+<head>
+    <title>Transactions</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div
+            class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Transactions</h1>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Number</th>
+                        <th>Cashier</th>
+                        <th>Total Item</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="transaction : ${transactions}">
+                        <td th:text="${transaction.id}">1</td>
+                        <td th:text="${#temporals.format(transaction.transactionDate, 'dd-MM-yyyy HH:mm')}">22-12-2025
+                            10:00</td>
+                        <td th:text="${transaction.transactionNumber}">TC-20251222-ABC</td>
+                        <td th:text="${transaction.cashier != null ? transaction.cashier.username : 'Unknown'}">Cashier
+                        </td>
+                        <td th:text="${transaction.items.size()}">0</td>
+                        <td
+                            th:text="${'Rp ' + #numbers.formatDecimal(transaction.totalAmount, 0, 'POINT', 0, 'COMMA')}">
+                            Rp 0</td>
+                        <td>
+                            <span th:text="${transaction.status}"
+                                th:class="${'badge ' + (transaction.status.name() == 'COMPLETED' ? 'bg-success' : (transaction.status.name() == 'PENDING' ? 'bg-warning' : 'bg-danger'))}">
+                                STATUS
+                            </span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(transactions)}">
+                        <td colspan="7" class="text-center">No transactions found.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

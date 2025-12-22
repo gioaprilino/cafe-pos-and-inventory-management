@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/main :: layout(~{::div})}" xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Sales</h5>
+                        <p class="card-text fs-3">Rp 1,250,000</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Orders Today</h5>
+                        <p class="card-text fs-3">45</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-warning text-dark">
+                    <div class="card-body">
+                        <h5 class="card-title">Low Stock Items</h5>
+                        <p class="card-text fs-3">3</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Recent Activities
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">User 'Cashier1' processed order #12345</li>
+                <li class="list-group-item">Product 'Cappuccino' stock updated</li>
+                <li class="list-group-item">New user 'KitchenStaff' registered</li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+</html>
